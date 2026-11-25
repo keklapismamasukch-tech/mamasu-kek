@@ -212,16 +212,19 @@ body.hasbar main{padding-bottom:110px}
     <div class="row" style="margin-top:12px"><button class="btn sm" id="reset">Reset bakers &amp; cakes to original list</button></div>
   </div>
 </section>
-  <p class="ver" id="ver">Mamasu Cake Splitter · v16 · 25 Nov 2026</p>
+  <p class="ver" id="ver">Mamasu Cake Splitter · v17 · 25 Nov 2026</p>
 </main>
 <div class="toast" id="toast"></div>
 
 <script>
 {
-const DEF_BAKERS=["AOT","JAENAP","MBOK ILAH","AUNTY BABY","KAKSU","RAFIDAH","GAYAH","TIKAH MUGAY"]; // list order = priority
-const OLD_ORDER="AOT,KAKSU,RAFIDAH,AUNTY BABY,GAYAH,MBOK ILAH,TIKAH MUGAY,JAENAP";
+// old short names -> full names (old saved days and lists are renamed when they load)
+const RENAME={"AOT":"AZURA REDUAN","MBOK ILAH":"SH NORFADILLAH","AUNTY BABY":"HANISAH","KAKSU":"SUSILAWATY","GAYAH":"ROKAYAH","TIKAH MUGAY":"ATIQAH MUGAY"};
+const rn=n=>RENAME[n]||n;
+const DEF_BAKERS=["AZURA REDUAN","JAENAP","SH NORFADILLAH","HANISAH","SUSILAWATY","RAFIDAH","ROKAYAH","ATIQAH MUGAY"]; // list order = priority
+const OLD_ORDER=["AOT","KAKSU","RAFIDAH","AUNTY BABY","GAYAH","MBOK ILAH","TIKAH MUGAY","JAENAP"].map(rn).join(",");
 const prioFix=l=>l.map(b=>b.n).join(",")===OLD_ORDER?DEF_BAKERS.map(n=>l.find(b=>b.n===n)):l;
-const DEF_G={"AOT":"B","AUNTY BABY":"B","MBOK ILAH":"B","JAENAP":"B","KAKSU":"R","RAFIDAH":"R","GAYAH":"R","TIKAH MUGAY":"R"};
+const DEF_G={"AZURA REDUAN":"B","HANISAH":"B","SH NORFADILLAH":"B","JAENAP":"B","SUSILAWATY":"R","RAFIDAH":"R","ROKAYAH":"R","ATIQAH MUGAY":"R"};
 const GN={B:"BUTTER",R:"REGULAR"};
 const DEF_CAKES=[["Coklat Mamasu","H","B"],["Cadbury","H","B"],["Masam Manis Vanilla","H","B"],["Masam Manis Pandan","H","B"],["Strawberry Matcha","H","B"],["Chempiyen","M","B"],["Greentea","M","B"],["Keladi","M","B"],["Nutella Almond","M","B"],["Horlick","E","B"],["Cheese Oreo","E","B"],["3 Rasa","E","B"],["Mocca","E","B"],["Red Velvet","E","B"],["Biscoff Cheese","E","B"],["ATM","H","R"],["PDRM","H","R"],["BOMBA","H","R"],["TUDM","H","R"],["KKM","H","R"],["Mango Cheese","H","R"],["Pelangi","H","R"],["Cheese Ice Cream","H","R"],["Pisang Susu","M","R"],["Tutty Fruity","M","R"],["Durian","M","R"],["Cappucino","M","R"],["Horlick Cheese","M","R"],["Coklat Nestum","M","R"],["Evergreen","E","R"],["Rempah","E","R"],["Prune","E","R"],["Strawberry Cheese","E","R"],["Coklat Cheese","E","R"],["Blueberry Cheese","E","R"],["Pandan Cheese","E","R"],["Cheese","E","R"],["Chipsmore","E","R"],["Coklat Chip","E","R"],["Butterscotch","E","R"],["Tembikai","E","R"],["Lemon Cheese","E","R"],["Mandarin","E","R"],["Coklat Mint","E","R"],["Peppermint","E","R"],["Kopi","E","R"]]; // [name, level, class B=Butter/Premium R=Regular] from list_kek.pdf
 const DEF_CG=new Map(DEF_CAKES.map(([n,,g])=>[n,g]));
@@ -272,7 +275,8 @@ const save=(k,v)=>{saveLocal(k,v);if(SHARED[k])pushShared(SHARED[k])};
 const setSync=t=>{const el=document.getElementById("sync");if(el)el.textContent=t};
 let bakers=load("mm_bakers",DEF_BAKERS.map(n=>({n,on:true,g:DEF_G[n]})));
 bakers.forEach(b=>{if(b.g!=="B"&&b.g!=="R")b.g=DEF_G[b.n]||"R"});
-bakers=prioFix(bakers);
+bakers.forEach(b=>{b.n=rn(b.n)});
+bakers=prioFix(bakers);saveLocal("mm_bakers",bakers);
 let cakes=load("mm_cakes",DEF_CAKES.map(([n,l,g])=>({n,l,g})));
 cakes.forEach(c=>{if(c.g!=="B"&&c.g!=="R")c.g=cg(c.n)});
 if(load("mm_cakever",1)<CAKE_VER){cakes=DEF_CAKES.map(([n,l,g])=>({n,l,g}));saveLocal("mm_cakes",cakes);saveLocal("mm_cakever",CAKE_VER)}
@@ -281,6 +285,7 @@ let alias=load("mm_alias",{});   // norm(raw text) -> cake name
 let hist=load("mm_hist",{});
 // saved days: { "2026-11-25": { b:{ AOT:{g:"B",i:[[cake,level,qty],...]} }, idle:{ JAENAP:"STANDBY" } } }
 let days=load("mm_days",{});
+for(const rec of Object.values(days)){if(!rec)continue;for(const k of ["b","idle"])if(rec[k]){const o={};for(const[n,x]of Object.entries(rec[k]))o[rn(n)]=x;rec[k]=o}}
 const pad2=n=>String(n).padStart(2,"0");
 const ds=d=>`${d.getFullYear()}-${pad2(d.getMonth()+1)}-${pad2(d.getDate())}`;
 const pd=s=>{const[a,b,c]=s.split("-").map(Number);return new Date(a,b-1,c)};
@@ -391,7 +396,7 @@ function parse(text){
   const found={B:new Map(),R:new Map()},unknown=new Map(),checks=new Map();
   const expect={B:null,R:null},label={B:"BUTTER",R:"REGULAR"},footer=[];
   let cat=null,title="",noHead=0,inFooter=false;
-  const bakerKeys=new Set(bakers.map(b=>norm(b.n)));
+  const bakerKeys=new Set([...bakers.map(b=>norm(b.n)),...Object.keys(RENAME).map(norm)]);
   for(let raw of text.split(/\n/)){
     let line=raw.trim();
     if(!line)continue;
@@ -696,7 +701,7 @@ const okB=v=>Array.isArray(v)&&v.every(b=>b&&typeof b.n==="string"&&typeof b.on=
 const okC=v=>Array.isArray(v)&&v.every(c=>c&&typeof c.n==="string"&&LV[c.l]);
 const okO=v=>v&&typeof v==="object"&&!Array.isArray(v);
 function applyShared(k,v){
-  if(k==="bakers"&&okB(v)){const l=v.map(b=>({n:b.n,on:b.on,g:b.g==="B"||b.g==="R"?b.g:(DEF_G[b.n]||"R")}));bakers=prioFix(l);if(bakers!==l)pushShared("bakers",true)}
+  if(k==="bakers"&&okB(v)){const l=v.map(b=>({n:rn(b.n),on:b.on,g:b.g==="B"||b.g==="R"?b.g:(DEF_G[rn(b.n)]||"R")}));bakers=prioFix(l);if(JSON.stringify(bakers)!==JSON.stringify(v))pushShared("bakers",true)}
   else if(k==="cakes"&&okC(v)&&!v.some(c=>["chempiyen","masammanisvanilla"].includes(norm(c.n)))){pushShared("cakes",true);return} // shared list is the old one: replace it with the PDF list
   else if(k==="cakes"&&okC(v))cakes=v.map(c=>({n:c.n,l:c.l,g:c.g==="B"||c.g==="R"?c.g:cg(c.n)}));
   else if(k==="alias"&&okO(v)){alias={};for(const[a,b]of Object.entries(v))if(typeof b==="string")alias[a]=b}
@@ -711,7 +716,7 @@ async function sheetPull(first,withDays){
     const r=await fetch(syncUrl+(syncUrl.includes("?")?"&":"?")+"_="+Date.now()+(wd?"&days=400":""));
     const j=await r.json();
     if(wd&&j&&j.days)applyDays(j.days);
-    if(j&&$("ver"))$("ver").textContent="Mamasu Cake Splitter · v16 · 25 Nov 2026 · Google script "+(j.ver?"v"+j.ver:"OLD (please update)");
+    if(j&&$("ver"))$("ver").textContent="Mamasu Cake Splitter · v17 · 25 Nov 2026 · Google script "+(j.ver?"v"+j.ver:"OLD (please update)");
     for(const k of KEYS){
       const e=j&&j[k];
       if(e&&e.t!=null){if(e.t!==remoteT[k]&&!pend[k]){remoteT[k]=e.t;applyShared(k,e.v)}}
@@ -745,8 +750,8 @@ function applyDays(v){
   for(const[d,rec]of Object.entries(v)){
     if(!/^\d{4}-\d{2}-\d{2}$/.test(d)||!okO(rec))continue;
     const r={b:{},idle:{}};
-    for(const[n,x]of Object.entries(rec.b||{}))if(okO(x)&&Array.isArray(x.i)&&n&&n!=="B"&&n!=="R"&&!x.i.some(a=>a&&(a[0]==="LABEL"||a[0]==="FOOTER")))r.b[n]={g:x.g==="B"?"B":"R",i:x.i.filter(a=>Array.isArray(a)&&typeof a[0]==="string").map(a=>[a[0],LV[a[1]]?a[1]:({HARD:"H",MEDIUM:"M",EASY:"E"}[a[1]]||"E"),+a[2]||0])};
-    for(const[n,st]of Object.entries(rec.idle||{}))if(st==="STANDBY"||st==="OFFDAY")r.idle[n]=st;
+    for(const[n,x]of Object.entries(rec.b||{}))if(okO(x)&&Array.isArray(x.i)&&n&&n!=="B"&&n!=="R"&&!x.i.some(a=>a&&(a[0]==="LABEL"||a[0]==="FOOTER")))r.b[rn(n)]={g:x.g==="B"?"B":"R",i:x.i.filter(a=>Array.isArray(a)&&typeof a[0]==="string").map(a=>[a[0],LV[a[1]]?a[1]:({HARD:"H",MEDIUM:"M",EASY:"E"}[a[1]]||"E"),+a[2]||0])};
+    for(const[n,st]of Object.entries(rec.idle||{}))if(st==="STANDBY"||st==="OFFDAY")r.idle[rn(n)]=st;
     if(okO(rec.label))r.label={B:String(rec.label.B||"BUTTER"),R:String(rec.label.R||"REGULAR")};
     if(Array.isArray(rec.footer))r.footer=rec.footer.filter(x=>typeof x==="string").slice(0,30);
     clean[d]=r;
