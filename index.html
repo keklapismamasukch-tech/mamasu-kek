@@ -104,6 +104,9 @@ body.hasbar main{padding-bottom:110px}
 .dlg .box{background:var(--card);border-radius:18px;padding:20px;width:min(360px,100%)}
 .dlg input{width:100%;font:22px "Nunito Sans";letter-spacing:.3em;text-align:center;padding:12px;border-radius:12px;border:1.5px solid var(--line);background:var(--bg);color:var(--ink);margin:6px 0}
 .ver{text-align:center;color:var(--mut);font-size:13px;margin:24px 0 0}
+.totals{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:14px 0 4px}
+.totals div{background:var(--choc);color:#fff4dc;border-radius:14px;padding:12px 16px;display:flex;justify-content:space-between;align-items:baseline}
+.totals span{font-weight:700;color:#f3d9b5}.totals b{font:800 30px/1 "Baloo 2"}
 .empty{color:var(--mut);text-align:center;padding:26px 10px}
 @media(max-width:600px){.sum{grid-template-columns:repeat(3,minmax(0,1fr))}.sum div:nth-child(1),.sum div:nth-child(5){grid-column:span 3}}
 @media(prefers-reduced-motion:reduce){.toast{transition:none}}
@@ -212,7 +215,7 @@ body.hasbar main{padding-bottom:110px}
     <div class="row" style="margin-top:12px"><button class="btn sm" id="reset">Reset bakers &amp; cakes to original list</button></div>
   </div>
 </section>
-  <p class="ver" id="ver">Mamasu Cake Splitter · v17 · 25 Nov 2026</p>
+  <p class="ver" id="ver">Mamasu Cake Splitter · v18 · 25 Nov 2026</p>
 </main>
 <div class="toast" id="toast"></div>
 
@@ -626,6 +629,8 @@ function renderView(){
   }
   if(v.idle.length)body+=`<div class="sec" style="background:var(--line)"><span>Not baking today</span></div><div class="card" style="padding:8px 14px">${v.idle.map(x=>`<div class="item" style="border:0;border-bottom:1px solid var(--line);border-radius:0"><span class="nm">${esc(x.n)}</span><span class="tag ${x.st==="OFFDAY"?"H":"E"}">${x.st}</span></div>`).join("")}</div>`;
   if(needNew.length)body=`<div class="warn" style="border-color:var(--hard);font-size:17px"><b style="color:var(--hard)">⚠ New Bakers Needed (${needNew.join(" & ")})</b><br><span class="hint">Everyone has reached the maximum. Add a baker in the Bakers tab or bring back someone on off-day.</span></div>`+body;
+  const L=dayLoyang(v);
+  body+=`<div class="totals"><div><span>Loyang</span><b>${L}</b></div><div><span>Pok</span><b>${pokOf(L)}</b></div></div>`;
   html+=`<div class="step">${step(5,v.saved&&!v.dirty?"Saved split":"Result")}<p class="hint" style="margin:0 0 8px">Tap any cake to move it to another baker.</p>${body}</div>`;
   out.innerHTML=html;
   bar(true);
@@ -644,6 +649,9 @@ function bar(on){
   $("co").hidden=s;
   $("barNote").textContent=s?"Already saved":"";
 }
+// total loyang of a day (assigned + still needing a baker); pok = loyang / 2
+function dayLoyang(v){let t=0;for(const g of ["B","R"])t+=(v.res[g]||[]).reduce((a,b)=>a+sumMap(b.items),0)+sumMap(v.over[g]||new Map());return t}
+const pokOf=n=>String(Math.round(n/2*10)/10);
 function whatsappText(v){
   const mon=["JAN","FEB","MAC","APR","MEI","JUN","JUL","OGOS","SEP","OKT","NOV","DIS"];
   const bd=pd(v.date);
@@ -659,6 +667,8 @@ function whatsappText(v){
   }
   if(v.idle.length)t+=`\n\n`+v.idle.map(x=>`${x.n} - ${x.st}`).join("\n");
   if(v.footer&&v.footer.length)t+=`\n\n______________________\n\n`+v.footer.join("\n");
+  const L=dayLoyang(v);
+  t+=`\n\nLoyang = ${L}\nPok = ${pokOf(L)}`;
   return t;
 }
 async function copyText(txt){
@@ -716,7 +726,7 @@ async function sheetPull(first,withDays){
     const r=await fetch(syncUrl+(syncUrl.includes("?")?"&":"?")+"_="+Date.now()+(wd?"&days=400":""));
     const j=await r.json();
     if(wd&&j&&j.days)applyDays(j.days);
-    if(j&&$("ver"))$("ver").textContent="Mamasu Cake Splitter · v17 · 25 Nov 2026 · Google script "+(j.ver?"v"+j.ver:"OLD (please update)");
+    if(j&&$("ver"))$("ver").textContent="Mamasu Cake Splitter · v18 · 25 Nov 2026 · Google script "+(j.ver?"v"+j.ver:"OLD (please update)");
     for(const k of KEYS){
       const e=j&&j[k];
       if(e&&e.t!=null){if(e.t!==remoteT[k]&&!pend[k]){remoteT[k]=e.t;applyShared(k,e.v)}}
