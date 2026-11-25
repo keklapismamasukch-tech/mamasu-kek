@@ -1,0 +1,866 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Mamasu Cake Splitter</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;800&family=Nunito+Sans:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+/* VOICE: warm, practical kitchen tool — fast to use with floury hands on a phone.
+   IDEA: a baker's order slip pinned under a slice of kek lapis.
+   PICTURE: layered kek lapis stripes in the header; the per-baker slips are the working picture.
+   COLOUR and TYPE: chocolate ground, butter yellow, strawberry for HARD, caramel for MEDIUM, pandan for EASY; Baloo 2 + Nunito Sans.
+   LAYOUT: tabs (Generate / Bakers / Cakes), one calm column, results as wrapping cards. */
+:root{color-scheme:light dark;
+--bg:light-dark(#fff8ea,#1d120c);--card:light-dark(#ffffff,#2a1b13);--ink:light-dark(#2b170e,#f7ead8);
+--mut:light-dark(#7a6253,#bfa591);--line:light-dark(#efdfc4,#45301f);
+--choc:#3b1f14;--butter:#ffcf5a;--hard:light-dark(#d3264f,#ff6f8f);--hardbg:light-dark(#ffe3ea,#4a1825);
+--med:light-dark(#b45f06,#ffb25c);--medbg:light-dark(#ffeccc,#46300f);--easy:light-dark(#1f8a4c,#6fd99a);--easybg:light-dark(#dff5e7,#173a26)}
+:root[data-theme=light]{color-scheme:light}:root[data-theme=dark]{color-scheme:dark}
+*{box-sizing:border-box;min-width:0}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.5 "Nunito Sans",system-ui,sans-serif;overflow-x:clip}
+header{background:var(--choc);color:#fff4dc;padding:22px max(5vw,16px) 0;position:relative}
+header h1{font:800 clamp(30px,6vw,44px)/1.05 "Baloo 2",sans-serif;margin:0;text-wrap:balance}
+header p{margin:4px 0 14px;color:#f3d9b5;font-size:15px}
+.sync{display:inline-block;margin:8px 0 0;padding:3px 12px;border-radius:999px;background:#5a3322;color:#ffe9b8;font-size:13px;font-weight:700}
+.layers{height:34px;background:repeating-linear-gradient(180deg,#f6c453 0 5px,#7a3d1c 5px 8px,#ffd97a 8px 13px,#5a2a12 13px 16px)}
+nav{display:flex;gap:6px;padding:0 max(5vw,16px);background:var(--choc)}
+nav button{flex:1;max-width:180px;border:0;border-radius:12px 12px 0 0;padding:12px 8px;font:700 15px "Nunito Sans";background:#5a3322;color:#f3d9b5;min-height:44px;cursor:pointer}
+nav button[aria-selected=true]{background:var(--bg);color:var(--ink)}
+main{max-width:1100px;margin:0 auto;padding:20px max(4vw,14px) 60px}
+section[hidden]{display:none}
+h2{font:800 24px/1.1 "Baloo 2";margin:0 0 8px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:16px;margin-bottom:16px}
+textarea,input[type=text]{width:100%;font:16px "Nunito Sans";color:var(--ink);background:var(--bg);border:1.5px solid var(--line);border-radius:12px;padding:12px}
+textarea{min-height:170px;resize:vertical}
+textarea:focus,input:focus,button:focus-visible{outline:3px solid var(--butter);outline-offset:1px}
+.row{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.btn{border:0;border-radius:12px;min-height:44px;padding:0 16px;font:700 15px "Nunito Sans";cursor:pointer;background:var(--line);color:var(--ink)}
+.btn.main{background:var(--butter);color:#2b170e;font-size:16px;padding:0 22px}
+.btn.sm{min-height:36px;padding:0 12px;font-size:14px}
+.hint{color:var(--mut);font-size:14px;margin:6px 0 10px}
+label.chk{display:flex;gap:8px;align-items:center;font-size:15px;min-height:44px;cursor:pointer}
+label.chk input{width:20px;height:20px;accent-color:#7a3d1c}
+.tag{display:inline-block;border-radius:999px;padding:1px 9px;font:700 12px/1.6 "Nunito Sans";white-space:nowrap}
+.H{background:var(--hardbg);color:var(--hard)}.M{background:var(--medbg);color:var(--med)}.E{background:var(--easybg);color:var(--easy)}
+.sum{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:8px;margin:4px 0 14px}
+.sum div{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:10px 12px}
+.sum b{display:block;font:800 clamp(24px,5vw,34px)/1 "Baloo 2"}.sum span{font-size:13px;color:var(--mut)}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:12px}
+.slip{background:var(--card);border:1px solid var(--line);border-radius:16px;overflow:hidden}
+.slip h3{margin:0;padding:10px 14px;font:800 19px/1.2 "Baloo 2";display:flex;justify-content:space-between;gap:8px;align-items:center;border-bottom:1px dashed var(--line)}
+.slip .meter{display:flex;height:7px}.slip .meter i{display:block}
+.slip ul{list-style:none;margin:0;padding:8px 14px 12px}
+.slip li{display:flex;justify-content:space-between;gap:8px;padding:5px 0;border-bottom:1px solid var(--line);font-size:15px}
+.slip li:last-child{border:0}.qty{font-weight:700;white-space:nowrap}
+.warn{background:light-dark(#fff1c9,#3d2f10);border:1px solid var(--butter);border-radius:14px;padding:12px 14px;margin-bottom:14px}
+.warn .u{display:flex;flex-wrap:wrap;gap:6px;align-items:center;justify-content:space-between;padding:6px 0;border-top:1px solid var(--line)}
+.list{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:6px}
+.item{display:flex;align-items:center;justify-content:space-between;gap:6px;padding:6px 10px;border:1px solid var(--line);border-radius:12px;background:var(--card)}
+.item .nm{flex:1;font-weight:600}
+.lv{border:0;border-radius:999px;min-height:34px;min-width:64px;font:800 13px "Nunito Sans";cursor:pointer}
+.x{border:0;background:none;color:var(--mut);font-size:20px;min-width:36px;min-height:36px;cursor:pointer}
+.toast{position:fixed;left:50%;bottom:20px;transform:translateX(-50%);background:var(--choc);color:#fff4dc;padding:10px 18px;border-radius:999px;font-weight:700;opacity:0;transition:opacity .25s;pointer-events:none}
+.toast.on{opacity:1}
+.today{margin:4px 0 12px}.chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}
+.chip{border:1.5px solid var(--easy);background:var(--easybg);color:var(--ink);border-radius:999px;min-height:40px;padding:0 14px;font:700 14px "Nunito Sans";cursor:pointer}
+.chip[aria-pressed=false]{border-color:var(--line);background:transparent;color:var(--mut);text-decoration:line-through}
+.check{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:12px 14px;margin-bottom:14px}
+.check .u{display:flex;flex-wrap:wrap;gap:6px 10px;align-items:center;justify-content:space-between;padding:7px 0;border-top:1px solid var(--line)}
+.check .u.unsure{background:light-dark(#fff6dc,#3a2c10);margin:0 -14px;padding:7px 14px}
+.raw{color:var(--mut);text-decoration:line-through}
+select{font:15px "Nunito Sans";min-height:40px;border-radius:10px;border:1.5px solid var(--line);background:var(--bg);color:var(--ink);padding:0 8px;max-width:100%}
+.histT{width:100%;border-collapse:collapse;font-size:15px}.histT td,.histT th{padding:6px 4px;border-bottom:1px solid var(--line);text-align:right}.histT td:first-child,.histT th:first-child{text-align:left}
+.GB{background:light-dark(#fff0b3,#4a3b0c);color:light-dark(#8a5a00,#ffd66b)}.GR{background:light-dark(#efe3d3,#3a2a1e);color:var(--ink)}
+.grp{font:800 13px "Nunito Sans";color:var(--mut);margin:8px 0 0}
+.sec{font:800 22px/1.1 "Baloo 2";margin:22px 0 10px;padding:8px 14px;border-radius:12px;display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap}
+.datebar{display:grid;grid-template-columns:auto minmax(0,1fr) auto auto;gap:6px;align-items:stretch;margin:2px 0 4px}
+.dlabel{border:2px solid var(--butter);background:light-dark(#fff4cf,#3a2c10);color:var(--ink);border-radius:12px;min-height:52px;cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:4px 8px}
+.dlabel small{font:600 12px "Nunito Sans";color:var(--mut)}.dlabel b{font:800 19px/1.15 "Baloo 2"}
+.calpanel{border:1px solid var(--line);border-radius:14px;padding:12px;margin:8px 0 12px;background:var(--bg)}
+.calh{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:4px;margin:12px 0 4px;text-align:center;font-size:12px;color:var(--mut);font-weight:700}
+.cal{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:4px}
+.cal button{min-height:54px;border-radius:10px;border:1px solid var(--line);background:var(--bg);color:var(--ink);font:700 15px "Nunito Sans";cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;padding:2px}
+.cal button small{font:700 11px "Nunito Sans";color:var(--easy)}
+.cal button.has{background:var(--easybg)}.cal button.sel{outline:3px solid var(--butter)}.cal button.tdy{border:2px solid var(--choc)}
+.cal span.pad{min-height:54px}
+.fair td,.fair th{padding:6px 4px;border-bottom:1px solid var(--line);text-align:right;white-space:nowrap}.fair td:first-child,.fair th:first-child{text-align:left}.fair{width:100%;border-collapse:collapse;font-size:15px}
+.bar{height:6px;border-radius:3px;background:var(--butter);margin-top:3px}
+.step .sh,.step>.sh{display:flex;align-items:center;gap:10px;font:800 19px/1.2 "Baloo 2";margin:0 0 10px}
+.num{display:inline-grid;place-items:center;width:28px;height:28px;border-radius:50%;background:var(--choc);color:#fff4dc;font:800 15px "Nunito Sans";flex:none}
+#out>.step{margin-top:6px}
+.saved{display:flex;flex-direction:column;gap:6px;background:var(--easybg);border:1.5px solid var(--easy);border-radius:14px;padding:12px 14px;margin-bottom:12px}
+.saved.dirty{background:light-dark(#fff1c9,#3d2f10);border-color:var(--butter)}
+li.mv{cursor:pointer;border-radius:8px}li.mv:hover,li.mv.open{background:var(--bg)}
+.mvi{color:var(--mut);font-weight:400;margin-left:4px}
+li.mover{display:flex;flex-wrap:wrap;gap:8px;align-items:center;justify-content:space-between;background:var(--bg);border:1.5px solid var(--butter)!important;border-radius:10px;padding:8px!important;margin:4px 0}
+li.mover label{display:flex;flex-wrap:wrap;gap:6px;align-items:center;font-size:15px}
+.actbar{position:fixed;left:0;right:0;bottom:0;z-index:5;background:var(--card);border-top:1px solid var(--line);box-shadow:0 -6px 20px rgba(0,0,0,.12);padding:10px max(4vw,14px) calc(10px + env(safe-area-inset-bottom))}
+.actbar .inner{max-width:1100px;margin:0 auto;display:flex;gap:8px;align-items:center;justify-content:flex-end;flex-wrap:wrap}
+.actbar #barNote{flex:1;min-width:120px}
+body.hasbar main{padding-bottom:110px}
+.dlg{position:fixed;inset:0;z-index:9;background:rgba(20,10,5,.55);display:grid;place-items:center;padding:16px}
+.dlg .box{background:var(--card);border-radius:18px;padding:20px;width:min(360px,100%)}
+.dlg input{width:100%;font:22px "Nunito Sans";letter-spacing:.3em;text-align:center;padding:12px;border-radius:12px;border:1.5px solid var(--line);background:var(--bg);color:var(--ink);margin:6px 0}
+.ver{text-align:center;color:var(--mut);font-size:13px;margin:24px 0 0}
+.empty{color:var(--mut);text-align:center;padding:26px 10px}
+@media(max-width:600px){.sum{grid-template-columns:repeat(3,minmax(0,1fr))}.sum div:nth-child(1),.sum div:nth-child(5){grid-column:span 3}}
+@media(prefers-reduced-motion:reduce){.toast{transition:none}}
+</style>
+</head>
+<body>
+<header>
+  <h1>Kek Lapis Mamasu · Cake Splitter</h1>
+  <p id="sync" class="sync">Connecting to shared list…</p>
+  <p>Paste the day's cake list, and every baker gets a fair share of HARD, MEDIUM and EASY cakes.</p>
+</header>
+<div class="layers" aria-hidden="true"></div>
+<nav role="tablist">
+  <button role="tab" id="t-gen" aria-selected="true" data-tab="gen">Generate</button>
+  <button role="tab" id="t-bak" aria-selected="false" data-tab="bak">Bakers</button>
+  <button role="tab" id="t-cak" aria-selected="false" data-tab="cak">Cakes</button>
+</nav>
+<main>
+<section id="gen">
+  <div class="card step">
+    <div class="sh"><span class="num">1</span>Bake date</div>
+    <div class="datebar">
+      <button class="btn" id="dPrev" aria-label="Previous day">‹</button>
+      <button class="dlabel" id="dShow" aria-expanded="false" aria-controls="calPanel"><small>Bake date · tap for calendar</small><b id="dTxt"></b></button>
+      <button class="btn" id="dNext" aria-label="Next day">›</button>
+      <button class="btn" id="dToday">Today</button>
+    </div>
+    <div id="dateNote" class="hint" style="margin:4px 0 0"></div>
+    <div id="calPanel" class="calpanel" hidden>
+      <div class="row" style="justify-content:space-between"><button class="btn sm" id="calPrev" aria-label="Previous month">‹</button><h2 id="calTitle" style="margin:0;font-size:20px"></h2><button class="btn sm" id="calNext" aria-label="Next month">›</button></div>
+      <div class="calh"><span>Mon</span><span>Tue</span><span>Wed</span><span>Thu</span><span>Fri</span><span>Sat</span><span>Sun</span></div>
+      <div class="cal" id="calGrid"></div>
+      <div id="calDay"></div>
+      <h2 style="margin-top:16px;font-size:20px">Fairness</h2>
+      <div class="row" style="margin-bottom:8px"><button class="btn sm" data-per="week" id="perW">Week</button><button class="btn sm" data-per="month" id="perM">Month</button><span id="perLbl" class="hint" style="margin:0"></span></div>
+      <div id="fair"></div>
+    </div>
+  </div>
+  <div class="card step">
+    <div class="sh"><span class="num">2</span>Who's working <span class="hint" style="margin:0 0 0 6px;font-weight:600">tap a name for off-day</span></div>
+    <div id="today" class="chips"></div>
+  </div>
+  <div class="card step">
+    <div class="sh"><span class="num">3</span>Paste the cake list</div>
+    <p class="hint">Paste the WhatsApp list as it is. Cakes under <b>KEK PREMIUM</b> (or BUTTER) go to Butter bakers, cakes under <b>KEK REGULAR</b> go to Regular bakers. Baker names, headings and the Adunan lines below the ____ line are skipped.</p>
+    <textarea id="orders" placeholder="Biscoff Cheese 2&#10;Pandan Cheese x3&#10;Durian - 4&#10;..."></textarea>
+    <div class="row" style="margin-top:10px">
+      <button class="btn main" id="go">Generate</button>
+      <button class="btn" id="again" title="Same list, different random split">Shuffle again</button>
+      <button class="btn" id="sample">Sample list</button>
+      <button class="btn" id="clear">Clear</button>
+    </div>
+    <label class="chk"><input type="checkbox" id="group" checked> Same cake ordered 2 or more = one baker bakes all of it (easier)</label>
+  </div>
+  <div id="out"></div>
+</section>
+<div id="actbar" class="actbar" hidden><div class="inner"><span id="barNote" class="hint" style="margin:0"></span><button class="btn" id="co">Copy only</button><button class="btn main" id="cs">Copy & Save</button></div></div>
+
+
+<section id="bak" hidden>
+  <div class="card">
+    <h2>Bakers</h2>
+    <p class="hint">Untick anyone who is off today. The number is the priority: bakers at the top get cakes first. Tap ▲ to move someone up. Tap BUTTER / REGULAR to move a baker to the other group. Butter bakers with no butter cakes can help with Regular; Regular bakers never get butter cakes.</p>
+    <div id="bakers" class="list"></div>
+    <div class="row" style="margin-top:12px">
+      <input type="text" id="newBaker" placeholder="New baker name" style="flex:1;min-width:180px">
+      <button class="btn main" id="addBaker">Add</button>
+    </div>
+  </div>
+  <div class="card">
+    <h2>Share with all phones</h2>
+    <p class="hint">Paste your Google Sheet sync link (ends with <b>/exec</b>) so every phone uses the same bakers, cake levels and history. Each phone only needs this once, or put it in the HTML file and nobody needs to.</p>
+    <div class="row"><input type="text" id="syncUrl" placeholder="https://script.google.com/macros/s/…/exec" style="flex:1;min-width:200px"><button class="btn main" id="syncSave">Connect</button></div>
+  </div>
+  <div class="card">
+    <h2>Cakes per baker</h2>
+    <p class="hint"><b>Per baker</b>: how many cakes one baker should get, so only as many bakers as needed are used (18 cakes ÷ 9 = 2 bakers). <b>Max</b> is the most a baker can take; <b>Buffer</b> is used only when everyone is already at Max. Above the buffer, the page warns <b>New Bakers Needed</b>.</p>
+    <div class="row"><label class="chk">Per baker <input type="text" inputmode="numeric" id="limMin" style="width:56px"> to <input type="text" inputmode="numeric" id="limTgt" style="width:56px"></label><label class="chk">Max <input type="text" inputmode="numeric" id="limMax" style="width:80px"></label><label class="chk">Buffer <input type="text" inputmode="numeric" id="limBuf" style="width:80px"></label><button class="btn main" id="limSave">Save</button></div>
+  </div>
+  <div class="card">
+    <h2>Fair pay</h2>
+    <p class="hint">Every day you tap <b>Copy & Save</b>, the split is saved in the Google Sheet. When choosing who bakes, bakers with the <b>fewest cakes so far</b> go first, so everyone ends up with about the same amount. See the totals by tapping the date on the Generate tab.</p>
+    <label class="chk">Balance over <select id="limPer"><option value="month">the month</option><option value="week">the week (Mon–Sun)</option></select></label>
+  </div>
+</section>
+
+<section id="cak" hidden>
+  <div class="card">
+    <h2>Cake list &amp; level</h2>
+    <p class="hint">Tap the level to switch it: HARD → MEDIUM → EASY. Tap the class to switch BUTTER ↔ REGULAR. The class decides who bakes a cake when the pasted list has no PREMIUM / REGULAR heading.</p>
+    <div class="row" style="margin-bottom:10px">
+      <input type="text" id="search" placeholder="Search cake…" style="flex:1;min-width:180px">
+    </div>
+    <div id="cakeCount" class="hint"></div>
+    <div id="cakes" class="list"></div>
+    <div class="row" style="margin-top:12px">
+      <input type="text" id="newCake" placeholder="New cake name" style="flex:2;min-width:180px">
+      <select id="newCakeG" aria-label="Class"><option value="R">REGULAR</option><option value="B">BUTTER</option></select>
+      <button class="btn sm H" id="addHard">+ HARD</button>
+      <button class="btn sm M" id="addMed">+ MEDIUM</button>
+      <button class="btn sm E" id="addEasy">+ EASY</button>
+    </div>
+    <h2 style="margin-top:18px;font-size:20px">Remembered corrections</h2>
+    <p class="hint">When you correct a scanned cake, the scanner remembers that spelling for next time.</p>
+    <div id="aliases" class="list"></div>
+    <div class="row" style="margin-top:12px"><button class="btn sm" id="reset">Reset bakers &amp; cakes to original list</button></div>
+  </div>
+</section>
+  <p class="ver" id="ver">Mamasu Cake Splitter · v16 · 25 Nov 2026</p>
+</main>
+<div class="toast" id="toast"></div>
+
+<script>
+{
+const DEF_BAKERS=["AOT","JAENAP","MBOK ILAH","AUNTY BABY","KAKSU","RAFIDAH","GAYAH","TIKAH MUGAY"]; // list order = priority
+const OLD_ORDER="AOT,KAKSU,RAFIDAH,AUNTY BABY,GAYAH,MBOK ILAH,TIKAH MUGAY,JAENAP";
+const prioFix=l=>l.map(b=>b.n).join(",")===OLD_ORDER?DEF_BAKERS.map(n=>l.find(b=>b.n===n)):l;
+const DEF_G={"AOT":"B","AUNTY BABY":"B","MBOK ILAH":"B","JAENAP":"B","KAKSU":"R","RAFIDAH":"R","GAYAH":"R","TIKAH MUGAY":"R"};
+const GN={B:"BUTTER",R:"REGULAR"};
+const DEF_CAKES=[["Coklat Mamasu","H","B"],["Cadbury","H","B"],["Masam Manis Vanilla","H","B"],["Masam Manis Pandan","H","B"],["Strawberry Matcha","H","B"],["Chempiyen","M","B"],["Greentea","M","B"],["Keladi","M","B"],["Nutella Almond","M","B"],["Horlick","E","B"],["Cheese Oreo","E","B"],["3 Rasa","E","B"],["Mocca","E","B"],["Red Velvet","E","B"],["Biscoff Cheese","E","B"],["ATM","H","R"],["PDRM","H","R"],["BOMBA","H","R"],["TUDM","H","R"],["KKM","H","R"],["Mango Cheese","H","R"],["Pelangi","H","R"],["Cheese Ice Cream","H","R"],["Pisang Susu","M","R"],["Tutty Fruity","M","R"],["Durian","M","R"],["Cappucino","M","R"],["Horlick Cheese","M","R"],["Coklat Nestum","M","R"],["Evergreen","E","R"],["Rempah","E","R"],["Prune","E","R"],["Strawberry Cheese","E","R"],["Coklat Cheese","E","R"],["Blueberry Cheese","E","R"],["Pandan Cheese","E","R"],["Cheese","E","R"],["Chipsmore","E","R"],["Coklat Chip","E","R"],["Butterscotch","E","R"],["Tembikai","E","R"],["Lemon Cheese","E","R"],["Mandarin","E","R"],["Coklat Mint","E","R"],["Peppermint","E","R"],["Kopi","E","R"]]; // [name, level, class B=Butter/Premium R=Regular] from list_kek.pdf
+const DEF_CG=new Map(DEF_CAKES.map(([n,,g])=>[n,g]));
+const cg=n=>DEF_CG.get(n)||"R";
+const CAKE_VER=2;
+const $=id=>document.getElementById(id);
+const esc=s=>String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const load=(k,d)=>{try{const v=localStorage.getItem(k);return v?JSON.parse(v):d}catch(e){return d}};
+const saveLocal=(k,v)=>{try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}};
+// ===== SHARED LIST =====
+// Paste your Google Apps Script web-app URL between the quotes so every phone syncs automatically.
+const SYNC_URL_FIXED="https://script.google.com/macros/s/AKfycbwjMl6y4zSbCCSS47f5U7tfzfRkvFTPxhn-oPFUdPDvbEOCEeIR7p-rQU4dkqL5detzkQ/exec";
+const KEYS=["bakers","cakes","alias","hist"];
+const SHARED={mm_bakers:"bakers",mm_cakes:"cakes",mm_alias:"alias",mm_hist:"hist"};
+let syncUrl=SYNC_URL_FIXED||load("mm_sync","");
+let mode="local",db=null,readOnly=false;
+const wT={},wBusy={},wAgain={},pend={},remoteT={};
+// No PIN: anyone with the link can save. (pin "1234" is still sent so a Google script that checks a PIN keeps working.)
+const pin="1234";
+const viewOnly=()=>false;
+const ensurePin=()=>Promise.resolve(true);
+function pinRejected(){toast("The Google script still asks for a PIN. Deploy the new script (no PIN) as a New version.")}
+function syncOk(){setSync("✓ Shared list · same on every phone")}
+async function sheetPush(k,val){
+  const r=await fetch(syncUrl,{method:"POST",headers:{"Content-Type":"text/plain;charset=utf-8"},body:JSON.stringify({key:k,value:val,pin})});
+  const j=await r.json();
+  if(j&&j.error==="pin"){pinRejected();throw new Error("pin")}
+  if(!j||!j.ok)throw new Error((j&&j.error)||"save failed");remoteT[k]=j.t;
+}
+function pushShared(k,auto){
+  if(mode==="local"||readOnly)return;
+  pend[k]=1;clearTimeout(wT[k]);
+  wT[k]=setTimeout(async()=>{
+    if(wBusy[k]){wAgain[k]=1;return}
+    wBusy[k]=1;
+    const val=JSON.parse(JSON.stringify({bakers,cakes,alias,hist}[k]));
+    try{
+      if(mode==="sheet")await sheetPush(k,val);else await db.doc("shared/"+k).set({v:val});
+      if(mode==="sheet")syncOk();else setSync("✓ Shared list · saved for everyone");
+    }catch(e){
+      if(e&&e.code==="invalid_argument"){readOnly=true;setSync("View only · your changes stay on this phone")}
+      else setSync("⚠ Couldn't save to shared list. Check internet");
+    }
+    wBusy[k]=0;if(wAgain[k]){wAgain[k]=0;pushShared(k,auto)}else pend[k]=0;
+  },350);
+}
+const save=(k,v)=>{saveLocal(k,v);if(SHARED[k])pushShared(SHARED[k])};
+const setSync=t=>{const el=document.getElementById("sync");if(el)el.textContent=t};
+let bakers=load("mm_bakers",DEF_BAKERS.map(n=>({n,on:true,g:DEF_G[n]})));
+bakers.forEach(b=>{if(b.g!=="B"&&b.g!=="R")b.g=DEF_G[b.n]||"R"});
+bakers=prioFix(bakers);
+let cakes=load("mm_cakes",DEF_CAKES.map(([n,l,g])=>({n,l,g})));
+cakes.forEach(c=>{if(c.g!=="B"&&c.g!=="R")c.g=cg(c.n)});
+if(load("mm_cakever",1)<CAKE_VER){cakes=DEF_CAKES.map(([n,l,g])=>({n,l,g}));saveLocal("mm_cakes",cakes);saveLocal("mm_cakever",CAKE_VER)}
+const LV={H:"HARD",M:"MEDIUM",E:"EASY"},RANK={H:0,M:1,E:2},NEXT={H:"M",M:"E",E:"H"};
+let alias=load("mm_alias",{});   // norm(raw text) -> cake name
+let hist=load("mm_hist",{});
+// saved days: { "2026-11-25": { b:{ AOT:{g:"B",i:[[cake,level,qty],...]} }, idle:{ JAENAP:"STANDBY" } } }
+let days=load("mm_days",{});
+const pad2=n=>String(n).padStart(2,"0");
+const ds=d=>`${d.getFullYear()}-${pad2(d.getMonth()+1)}-${pad2(d.getDate())}`;
+const pd=s=>{const[a,b,c]=s.split("-").map(Number);return new Date(a,b-1,c)};
+const todayS=()=>ds(new Date());
+function periodRange(dateS,per){
+  const d=pd(dateS);
+  if(per==="week"){const k=(d.getDay()+6)%7;const a=new Date(d);a.setDate(d.getDate()-k);const b=new Date(a);b.setDate(a.getDate()+6);return[ds(a),ds(b)]}
+  return[ds(new Date(d.getFullYear(),d.getMonth(),1)),ds(new Date(d.getFullYear(),d.getMonth()+1,0))];
+}
+// totals per baker within the week/month of dateS; skip = leave that date out (when re-doing a day)
+function periodStats(dateS,per,skip){
+  const[a,b]=periodRange(dateS,per),st={};
+  for(const[day,rec]of Object.entries(days)){
+    if(day<a||day>b||day===skip||!rec||!rec.b)continue;
+    for(const[n,x]of Object.entries(rec.b)){const o=st[n]||(st[n]={T:0,H:0,M:0,E:0,d:0});o.d++;for(const[,l,q]of x.i||[]){o[l]=(o[l]||0)+q;o.T+=q}}
+  }
+  return st;
+}
+let curStats={};     // baker -> {H,E,d}
+$("orders").value=load("mm_orders","");
+const toast=m=>{const t=$("toast");t.textContent=m;t.classList.add("on");clearTimeout(toast.h);toast.h=setTimeout(()=>t.classList.remove("on"),1800)};
+const norm=s=>s.toLowerCase().replace(/[^a-z0-9]/g,"");
+
+// ---------- tabs
+document.querySelectorAll("nav button").forEach(b=>b.addEventListener("click",()=>{
+  document.querySelectorAll("nav button").forEach(x=>x.setAttribute("aria-selected",x===b));
+  ["gen","bak","cak"].forEach(id=>$(id).hidden=id!==b.dataset.tab);
+}));
+
+// ---------- bakers
+function drawBakers(){
+  $("today").innerHTML=["B","R"].map(g=>`<div class="grp">${GN[g]}</div><div class="chips">${bakers.map((b,i)=>b.g!==g?"":`<button class="chip" data-c="${i}" aria-pressed="${b.on}">${esc(b.n)}</button>`).join("")}</div>`).join("");
+  $("bakers").innerHTML=bakers.map((b,i)=>`<div class="item"><button class="x" data-up="${i}" aria-label="Move ${esc(b.n)} up" title="Move up">▲</button><label class="chk nm" style="min-height:36px"><input type="checkbox" data-i="${i}" ${b.on?"checked":""}>${bakers.filter((x,j)=>x.g===b.g&&j<=i).length}. ${esc(b.n)}</label><button class="lv G${b.g}" data-g="${i}">${GN[b.g]}</button><button class="x" data-del="${i}" aria-label="Remove ${esc(b.n)}">×</button></div>`).join("");
+}
+$("bakers").addEventListener("change",e=>{const i=e.target.dataset.i;if(i!=null){bakers[i].on=e.target.checked;save("mm_bakers",bakers);drawBakers()}});
+$("today").addEventListener("click",e=>{const i=e.target.dataset.c;if(i==null)return;bakers[i].on=!bakers[i].on;save("mm_bakers",bakers);drawBakers();refresh(true)});
+$("bakers").addEventListener("click",e=>{const u=e.target.dataset.up;if(u!=null){const i=+u;let j=i-1;while(j>=0&&bakers[j].g!==bakers[i].g)j--;if(j>=0){const [b]=bakers.splice(i,1);bakers.splice(j,0,b);save("mm_bakers",bakers);drawBakers();refresh(true)}return}const g=e.target.dataset.g;if(g!=null){bakers[g].g=bakers[g].g==="B"?"R":"B";save("mm_bakers",bakers);drawBakers();refresh(true);return}const i=e.target.dataset.del;if(i!=null){bakers.splice(i,1);save("mm_bakers",bakers);drawBakers()}});
+$("addBaker").addEventListener("click",()=>{const n=$("newBaker").value.trim().toUpperCase();if(!n)return;if(bakers.some(b=>b.n===n))return toast("Already in list");bakers.push({n,on:true,g:"R"});$("newBaker").value="";save("mm_bakers",bakers);drawBakers()});
+
+// ---------- cakes
+function drawCakes(){
+  const q=norm($("search").value);
+  const list=cakes.map((c,i)=>({...c,i})).filter(c=>!q||norm(c.n).includes(q)).sort((a,b)=>a.n.localeCompare(b.n));
+  const cnt=l=>cakes.filter(c=>c.l===l).length;
+  $("cakeCount").textContent=`${cakes.length} cakes · ${cnt("H")} HARD · ${cnt("M")} MEDIUM · ${cnt("E")} EASY · ${cakes.filter(c=>c.g==="B").length} BUTTER · ${cakes.filter(c=>c.g==="R").length} REGULAR`;
+  $("cakes").innerHTML=list.map(c=>`<div class="item"><span class="nm">${esc(c.n)}</span><button class="lv ${c.l}" data-t="${c.i}">${LV[c.l]}</button><button class="lv G${c.g}" data-cg="${c.i}">${GN[c.g]}</button><button class="x" data-del="${c.i}" aria-label="Remove ${esc(c.n)}">×</button></div>`).join("")||`<div class="empty">No cake matches.</div>`;
+  const al=Object.entries(alias);
+  $("aliases").innerHTML=al.length?al.map(([k,v])=>`<div class="item"><span class="nm"><span class="raw">${esc(k)}</span> → ${esc(v)}</span><button class="x" data-al="${esc(k)}" aria-label="Forget">×</button></div>`).join(""):`<div class="hint">None yet.</div>`;
+}
+$("aliases").addEventListener("click",e=>{const k=e.target.dataset.al;if(k!=null){delete alias[k];save("mm_alias",alias);drawCakes()}});
+$("search").addEventListener("input",drawCakes);
+$("cakes").addEventListener("click",e=>{
+  const t=e.target.dataset.t,d=e.target.dataset.del,g=e.target.dataset.cg;
+  if(t!=null){cakes[t].l=NEXT[cakes[t].l]||"E"}
+  else if(g!=null){cakes[g].g=cakes[g].g==="B"?"R":"B"}
+  else if(d!=null){cakes.splice(d,1)} else return;
+  save("mm_cakes",cakes);drawCakes();
+});
+function addCake(name,l,g){
+  const n=name.trim();if(!n)return false;
+  if(g!=="B"&&g!=="R")g=$("newCakeG").value;
+  const ex=cakes.find(c=>norm(c.n)===norm(n));
+  if(ex){ex.l=l;ex.g=g}else cakes.push({n,l,g});
+  save("mm_cakes",cakes);drawCakes();return true;
+}
+$("addHard").addEventListener("click",()=>{if(addCake($("newCake").value,"H")){$("newCake").value="";toast("Added as HARD")}});
+$("addMed").addEventListener("click",()=>{if(addCake($("newCake").value,"M")){$("newCake").value="";toast("Added as MEDIUM")}});
+$("addEasy").addEventListener("click",()=>{if(addCake($("newCake").value,"E")){$("newCake").value="";toast("Added as EASY")}});
+$("reset").addEventListener("click",function(){
+  if(this.dataset.armed!=="1"){this.dataset.armed="1";this.textContent="Tap again to confirm reset";setTimeout(()=>{this.dataset.armed="";this.textContent="Reset bakers & cakes to original list"},3000);return}
+  bakers=DEF_BAKERS.map(n=>({n,on:true,g:DEF_G[n]}));cakes=DEF_CAKES.map(([n,l,g])=>({n,l,g}));
+  save("mm_bakers",bakers);save("mm_cakes",cakes);drawBakers();drawCakes();this.dataset.armed="";this.textContent="Reset bakers & cakes to original list";toast("Reset done");
+});
+
+// ---------- typo-tolerant scanner
+function lev(a,b){const m=a.length,n=b.length,d=[];for(let i=0;i<=m;i++){d[i]=[i];for(let j=1;j<=n;j++)d[i][j]=i?0:j}for(let i=1;i<=m;i++)for(let j=1;j<=n;j++){const c=a[i-1]===b[j-1]?0:1;d[i][j]=Math.min(d[i-1][j]+1,d[i][j-1]+1,d[i-1][j-1]+c);if(i>1&&j>1&&a[i-1]===b[j-2]&&a[i-2]===b[j-1])d[i][j]=Math.min(d[i][j],d[i-2][j-2]+1)}return d[m][n]}
+const FILLER=new Set(["kek","lapis","cake","layer","sarawak","perisa","flavour","flavor","klp"]);
+const SYN={choc:"coklat",choco:"coklat",chocolate:"coklat",chocolat:"coklat",cokelat:"coklat",coklet:"coklat",cokla:"coklat",keju:"cheese",horlicks:"horlick",cappuccino:"cappucino",capuccino:"cappucino",tutti:"tutty",frutti:"fruity",fruitty:"fruity",banana:"pisang",watermelon:"tembikai",spice:"rempah",spices:"rempah",rainbow:"pelangi",lemang:"lemon",kopi:"coffee",coffee:"coffee",tiga:"3",mocha:"mocca",moca:"mocca",champion:"chempiyen",chempion:"chempiyen",green:"green",cappucinno:"cappucino"};
+const words=s=>s.toLowerCase().split(/[^a-z0-9]+/).filter(Boolean).map(w=>SYN[w]||w).filter(w=>!FILLER.has(w));
+const sim=(a,b)=>a===b?1:1-lev(a,b)/Math.max(a.length,b.length,1);
+const simW=(a,b)=>Math.max(sim(a,b),Math.min(a.length,b.length)>=3&&(a.startsWith(b)||b.startsWith(a))?.9:0); // word-level: "straw" ~ "strawberry"
+function score(iw,cake){
+  const cw=words(cake.n),a=iw.join(""),b=cw.join("");
+  if(!a||!b)return 0;
+  if(a===b)return 1;
+  let s=sim(a,b);
+  if(cw.length&&iw.length){
+    const s2=cw.reduce((t,w)=>t+Math.max(...iw.map(x=>simW(x,w))),0)/cw.length;
+    const s3=iw.reduce((t,w)=>t+Math.max(...cw.map(x=>simW(x,w))),0)/iw.length;
+    s=Math.max(s,iw.length>cw.length?(s2+2*s3)/3:(s2+s3)/2); // extra words in the order = less sure
+  }
+  if(a.includes(b))s=Math.max(s,.6+.15*b.length/a.length);
+  return s;
+}
+function match(raw){
+  const k=norm(raw);if(!k)return{c:null};
+  if(alias[k]){const c=cakes.find(c=>c.n===alias[k]);if(c)return{c,how:"remembered"}}
+  const exact=cakes.find(c=>norm(c.n)===k);if(exact)return{c:exact,how:"exact"};
+  const iw=words(raw);
+  const ranked=cakes.map(c=>({c,s:score(iw,c)})).sort((x,y)=>y.s-x.s);
+  const top=ranked[0];if(!top)return{c:null};
+  if(top.s>=.8&&!(ranked[1]&&ranked[1].s>=top.s-.02&&top.s<1))return{c:top.c,how:top.s===1?"exact":"fixed"};
+  if(top.s>=.6)return{c:top.c,how:"unsure"};
+  return{c:null,guess:top.s>=.4?top.c:null};
+}
+const BAKER_PREFIX=/^(kak|kakak|ibuk|ibu|mbok|aunty|auntie|cik|mak|makcik|bibik|bik)\b/i;
+function parse(text){
+  const found={B:new Map(),R:new Map()},unknown=new Map(),checks=new Map();
+  const expect={B:null,R:null},label={B:"BUTTER",R:"REGULAR"},footer=[];
+  let cat=null,title="",noHead=0,inFooter=false;
+  const bakerKeys=new Set(bakers.map(b=>norm(b.n)));
+  for(let raw of text.split(/\n/)){
+    let line=raw.trim();
+    if(!line)continue;
+    if(/^[_\-=~—.]{4,}$/.test(line)){inFooter=true;continue}
+    if(inFooter){footer.push(line);continue}
+    const bold=/^\*.*\*$/.test(line);
+    const plain=line.replace(/[*_~]/g,"").trim();
+    const low=plain.toLowerCase();
+    // section headings: KEK PREMIUM / KEK BUTTER / KEK REGULAR / BIASA (optionally "- 10 LOYANG")
+    const sec=low.match(/^(?:kek\s+)?(?:lapis\s+)?(premium|butter|regular|reguler|biasa)\b[^a-z0-9]*(?:(\d+)\s*loyang)?\s*$/);
+    if(sec){cat=/premium|butter/.test(sec[1])?"B":"R";label[cat]=sec[1].toUpperCase();if(sec[2])expect[cat]=+sec[2];continue}
+    if(bold){if(!title&&/list|kek/i.test(plain))title=plain;continue}        // other bold lines = headings / baker names
+    if(BAKER_PREFIX.test(plain)||bakerKeys.has(norm(plain)))continue;        // old baker name lines
+    if(/^\d+\s*loyang$/i.test(plain))continue;
+    let lc=cat;
+    line=plain.replace(/^\s*[-•·]+\s*/,"").replace(/^\s*\d+\s*[.)]\s+/,"").trim();
+    if(/\bbutter\b|\bpremium\b/i.test(line)){lc="B";line=line.replace(/\b(butter|premium)\b/ig," ").trim()}
+    else if(/\b(regular|reguler|biasa)\b/i.test(line)){lc="R";line=line.replace(/\b(regular|reguler|biasa)\b/ig," ").trim()}
+    let q=1,m;
+    if((m=line.match(/^(.*?)[\s\-=:,(]*[x×]?\s*(\d+)\s*(?:x|pcs?|biji|bijik|kotak|box|loyang|bj)?\s*\)?\s*$/i))&&m[1].trim()){q=+m[2];line=m[1]}
+    else if((m=line.match(/^(\d+)\s*(?:x|×|pcs?|biji|bijik|kotak|box|loyang|bj)?\s+(.+)$/i))){q=+m[1];line=m[2]}
+    line=line.replace(/[\s\-=:,]+$/,"").trim();
+    if(!line||q<=0)continue;
+    const r=match(line),k=norm(line);
+    if(!lc){lc=r.c?r.c.g:"R";noHead+=q}
+    if(r.c){
+      found[lc].set(r.c.n,(found[lc].get(r.c.n)||0)+q);
+      if(r.how!=="exact"){const o=checks.get(k)||{raw:line,k,q:0,c:r.c.n,how:r.how};o.q+=q;checks.set(k,o)}
+    }else{const o=unknown.get(k)||{raw:line,k,q:0,guess:r.guess?r.guess.n:"",cats:{}};o.q+=q;o.cats[lc]=(o.cats[lc]||0)+q;unknown.set(k,o)}
+  }
+  return{found,unknown:[...unknown.values()],checks:[...checks.values()],expect,label,footer,title,noHead};
+}
+
+// ---------- distribution
+const shuffle=a=>{for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a};
+let LIM=Object.assign({min:6,tgt:9,max:27,buf:30,per:"month"},load("mm_lim",{}));
+// how many bakers a group needs: about LIM.min–LIM.tgt cakes each, never more bakers than are free
+function need(total,avail){if(!total||!avail)return 0;let n=Math.ceil(total/Math.max(1,+LIM.tgt||9));while(n>1&&total/n<(+LIM.min||6))n--;return Math.min(n,avail)}
+// Each baker takes at most LIM.max cakes. Only when the group has more cakes than that can cover,
+// everyone may go up to LIM.buf. Anything still left = "New Bakers Needed".
+function distribute(found,members){
+  const team=shuffle(members.map(b=>({n:b.n,H:0,M:0,E:0,items:new Map()})));
+  if(!team.length)return null;
+  const together=$("group").checked;
+  const level=n=>cakes.find(c=>c.n===n)?.l||"E";
+  const total=sumMap(found);
+  const max=Math.max(1,+LIM.max||27),buf=Math.max(max,+LIM.buf||max);
+  const cap=total>team.length*max?buf:max;
+  const over=new Map();
+  const hv=(b,k)=>(curStats[b.n]?.[k]||0);
+  const tot=b=>b.H+b.M+b.E, work=b=>b.H*3+b.M*2+b.E, room=b=>cap-tot(b);
+  const pW=b=>hv(b,"T");
+  // HARD shared out evenly first, then MEDIUM, then EASY fills everyone to the same total.
+  // Saved history breaks ties, so the "extra" cake rotates fairly over days.
+  const rank={
+    H:(a,b)=>a.H-b.H||tot(a)-tot(b)||hv(a,"H")-hv(b,"H"),
+    M:(a,b)=>a.M-b.M||tot(a)-tot(b)||work(a)-work(b)||hv(a,"M")-hv(b,"M"),
+    E:(a,b)=>tot(a)-tot(b)||work(a)-work(b)||pW(a)-pW(b)
+  };
+  const give=(b,n,l,q)=>{b[l]+=q;b.items.set(n,(b.items.get(n)||0)+q)};
+  for(const l of ["H","M","E"]){
+    // same cake ordered 2+ times = one block for one baker (biggest blocks first)
+    const blocks=[...found].filter(([n])=>level(n)===l).sort((a,b)=>b[1]-a[1]||a[0].localeCompare(b[0]));
+    for(const [n,qty] of blocks){
+      let left=qty;
+      if(together){
+        const fit=team.filter(b=>room(b)>=left).sort(rank[l]);
+        if(fit.length){give(fit[0],n,l,left);continue}
+        // too big for anyone's free space: fill the emptiest bakers with as much as they can take
+        while(left>0){const b=team.filter(b=>room(b)>0).sort((a,b)=>room(b)-room(a)||rank[l](a,b))[0];if(!b)break;const q=Math.min(room(b),left);give(b,n,l,q);left-=q}
+      }else{
+        while(left>0){const b=team.filter(b=>room(b)>0).sort((a,b)=>rank[l](a,b)||(b.items.has(n)?0:1)-(a.items.has(n)?0:1))[0];if(!b)break;give(b,n,l,1);left--}
+      }
+      if(left>0)over.set(n,(over.get(n)||0)+left);
+    }
+  }
+  // even out totals: move (or swap) whole cakes between a busier and a lighter baker, never splitting a cake
+  if(together&&team.length>1){
+    const take=(b,n,q)=>{const l=level(n);b[l]-=q;const r=b.items.get(n)-q;r?b.items.set(n,r):b.items.delete(n)};
+    const pref={E:0,M:1,H:2};
+    for(let it=0;it<200;it++){
+      let best=null;
+      for(const a of team)for(const b of team){
+        const d=tot(a)-tot(b);if(d<2)continue;
+        for(const [x,qx] of a.items){
+          if(qx<d&&tot(b)+qx<=cap){const gain=qx*(d-qx),k=[gain,-pref[level(x)]];if(!best||k[0]>best.k[0]||(k[0]===best.k[0]&&k[1]>best.k[1]))best={k,a,b,x,qx}}
+          for(const [y,qy] of b.items){const m=qx-qy;if(m>0&&m<d&&!(x===y)){const gain=m*(d-m),k=[gain,-pref[level(x)]-pref[level(y)]];if(!best||k[0]>best.k[0]||(k[0]===best.k[0]&&k[1]>best.k[1]))best={k,a,b,x,qx,y,qy}}}
+        }
+      }
+      if(!best)break;
+      const {a,b,x,qx,y,qy}=best;
+      take(a,x,qx);give(b,x,level(x),qx);
+      if(y){take(b,y,qy);give(a,y,level(y),qy)}
+    }
+  }
+  const order=bakers.map(b=>b.n);
+  team.sort((a,b)=>order.indexOf(a.n)-order.indexOf(b.n));
+  team.cap=cap;team.buffer=cap>max;team.over=over;team.max=max;
+  return team;
+}
+
+// ---------- day view: one day's split, freshly generated or reopened from the saved days
+const lv=n=>cakes.find(c=>c.n===n)?.l||"E";
+const sumMap=m=>[...m.values()].reduce((a,b)=>a+b,0);
+let lastParse=null,lastIdle=[],V=null;
+const editing={};          // date -> true while redoing a saved day
+let moving=null;           // {g,b,c} cake being moved by hand
+const mkB=n=>({n,H:0,M:0,E:0,items:new Map()});
+const lvV=n=>(V&&V.lv.get(n))||lv(n);
+const sortItems=m=>[...m].sort((x,y)=>RANK[lvV(x[0])]-RANK[lvV(y[0])]||x[0].localeCompare(y[0]));
+function recount(b){b.H=b.M=b.E=0;for(const[n,q]of b.items)b[lvV(n)]+=q}
+const bakerOrder=()=>bakers.map(b=>b.n);
+function sortTeam(t){const o=bakerOrder();t.sort((a,b)=>(o.indexOf(a.n)+1||99)-(o.indexOf(b.n)+1||99))}
+
+function genView(){
+  const text=$("orders").value;save("mm_orders",text);
+  const P=parse(text);lastParse=P;
+  const {found,unknown,checks}=P;
+  const opts=sel=>cakes.slice().sort((x,y)=>x.n.localeCompare(y.n)).map(c=>`<option value="${esc(c.n)}" ${c.n===sel?"selected":""}>${esc(c.n)} (${LV[c.l]})</option>`).join("");
+  const newBtns=(n,g)=>["H","M","E"].map(l=>`<button class="btn sm ${l}" data-add="${l}" data-g="${g||""}" data-n="${esc(n)}">New ${LV[l]}</button>`).join("");
+  const domG=u=>u&&u.cats?((u.cats.B||0)>(u.cats.R||0)?"B":"R"):"";
+  let notes="";
+  if(unknown.length)notes+=`<div class="warn"><b>${unknown.length} cake${unknown.length>1?"s":""} not recognised.</b> Pick the right cake, or add it as a new cake:${unknown.map(u=>`<div class="u"><span>${esc(u.raw)} <span class="qty">×${u.q}</span></span><span class="row"><select data-fix="${esc(u.k)}"><option value="">${u.guess?"":"Pick cake…"}</option>${opts(u.guess)}</select>${newBtns(u.raw,domG(u))}</span></div>`).join("")}${unknown.some(u=>u.guess)?`<p class="hint" style="margin:6px 0 0">Best guess is pre-selected. Change it if it's wrong, then tap the cake to confirm.</p>`:""}</div>`;
+  if(checks.length){
+    const uns=checks.filter(c=>c.how==="unsure").length;
+    notes+=`<div class="check"><b>Scanner fixed ${checks.length} spelling${checks.length>1?"s":""}</b>${uns?` · <span style="color:var(--hard)">${uns} to double-check</span>`:""}<p class="hint" style="margin:2px 0 4px">Wrong guess? Change it, and the scanner will remember. A totally new cake? Tap New.</p>${checks.sort((a,b)=>(a.how==="unsure"?0:1)-(b.how==="unsure"?0:1)).map(c=>`<div class="u ${c.how==="unsure"?"unsure":""}"><span><span class="raw">${esc(c.raw)}</span> <span class="qty">×${c.q}</span>${c.how==="remembered"?` <span class="tag E">remembered</span>`:c.how==="unsure"?` <span class="tag H">check</span>`:""}</span><span class="row"><select data-fix="${esc(c.k)}">${opts(c.c)}</select>${c.how==="unsure"?newBtns(c.raw,(cakes.find(x=>x.n===c.c)||{}).g):""}</span></div>`).join("")}</div>`;
+  }
+  if(P.noHead)notes+=`<p class="hint">${P.noHead} cake${P.noHead>1?"s":""} had no PREMIUM / REGULAR heading, so each was sent to the group of its class (BUTTER or REGULAR, set in the Cakes tab).</p>`;
+  const v={date:calSel,res:{},idle:[],label:P.label,footer:P.footer,over:{B:new Map(),R:new Map()},cap:{},buffer:{},max:LIM.max,expect:P.expect,unk:{},noTeam:{},saved:false,dirty:false,lv:new Map(),notes};
+  if(!found.B.size&&!found.R.size)return v;
+  // pick bakers fairly: fewest cakes so far this month/week first, then priority order.
+  // Butter bakers do butter first; spare ones can help Regular. Regular bakers never do butter.
+  curStats=periodStats(calSel,LIM.per,calSel);
+  const T=b=>curStats[b.n]?.T||0, idx=b=>bakers.indexOf(b);
+  const avail=g=>bakers.filter(b=>b.on&&b.g===g);
+  const aB=avail("B").sort((a,b)=>T(a)-T(b)||idx(a)-idx(b)),nB=need(sumMap(found.B),aB.length);
+  const useB=aB.slice(0,nB),spareB=aB.slice(nB);
+  const poolR=avail("R").concat(spareB).sort((a,b)=>T(a)-T(b)||(a.g==="R"?0:1)-(b.g==="R"?0:1)||idx(a)-idx(b)),nR=need(sumMap(found.R),poolR.length);
+  const use={B:useB,R:poolR.slice(0,nR)};
+  for(const g of ["B","R"]){
+    v.unk[g]=unknown.reduce((a,u)=>a+(u.cats[g]||0),0);
+    if(!found[g].size)continue;
+    const team=distribute(found[g],use[g]);
+    if(!team){v.noTeam[g]=sumMap(found[g]);v.over[g]=new Map(found[g]);continue}
+    v.res[g]=team.filter(b=>b.items.size);v.over[g]=team.over;v.cap[g]=team.cap;v.buffer[g]=team.buffer;
+  }
+  idleFix(v);
+  return v;
+}
+// everyone not baking: STANDBY (working but not needed) or OFFDAY (unticked); keeps a saved day's statuses
+function idleFix(v){
+  const busy=new Set(Object.values(v.res).flat().filter(b=>b.items.size).map(b=>b.n));
+  const prev=new Map(v.idle.map(x=>[x.n,x.st]));
+  const names=[...new Set([...bakerOrder(),...prev.keys()])];
+  v.idle=names.filter(n=>!busy.has(n)).map(n=>({n,st:prev.get(n)||(bakers.find(b=>b.n===n)?.on===false?"OFFDAY":"STANDBY")}));
+  lastIdle=v.idle;
+}
+function viewFromRec(date,rec){
+  const v={date,res:{},idle:Object.entries(rec.idle||{}).map(([n,st])=>({n,st})),label:Object.assign({B:"BUTTER",R:"REGULAR"},rec.label||{}),footer:rec.footer||[],over:{B:new Map(),R:new Map()},cap:{B:LIM.buf,R:LIM.buf},buffer:{},max:LIM.max,expect:{},unk:{},noTeam:{},saved:true,dirty:false,lv:new Map(),notes:""};
+  for(const[n,x]of Object.entries(rec.b||{})){const b=mkB(n);for(const[c,l,q]of x.i){b.items.set(c,(b.items.get(c)||0)+q);v.lv.set(c,l)}(v.res[x.g]||(v.res[x.g]=[])).push(b)}
+  V=v;for(const g in v.res){v.res[g].forEach(recount);sortTeam(v.res[g])}
+  idleFix(v);return v;
+}
+function recFromView(v){
+  const rec={b:{},idle:{},label:v.label,footer:v.footer};
+  for(const g in v.res)for(const b of v.res[g])if(b.items.size){const o=rec.b[b.n]||(rec.b[b.n]={g,i:[]});for(const[n,q]of b.items)o.i.push([n,lvV(n),q])}
+  for(const x of v.idle)rec.idle[x.n]=x.st;
+  return rec;
+}
+// which bakers may take a cake of group g (manual move)
+function moveTargets(g,from){
+  const butterBusy=new Set((V.res.B||[]).filter(b=>b.items.size).map(b=>b.n));
+  return bakers.filter(b=>b.on&&b.n!==from&&(g==="B"?b.g==="B":(b.g==="R"||!butterBusy.has(b.n)))).map(b=>b.n);
+}
+function doMove(g,from,cake,to,q){
+  const team=V.res[g];const a=team.find(b=>b.n===from);if(!a)return;
+  let b=team.find(x=>x.n===to);if(!b){b=mkB(to);team.push(b);sortTeam(team)}
+  q=Math.min(q,a.items.get(cake)||0);if(!q)return;
+  const r=a.items.get(cake)-q;r?a.items.set(cake,r):a.items.delete(cake);
+  b.items.set(cake,(b.items.get(cake)||0)+q);
+  recount(a);recount(b);
+  V.res[g]=team.filter(x=>x.items.size);
+  idleFix(V);V.dirty=true;
+  const t=b.H+b.M+b.E,cap=V.cap[g]||LIM.buf;
+  toast(t>cap?`Moved. ${to} now has ${t}, over the max ${cap}`:`Moved ${q} ${cake} to ${to}`);
+}
+function showDay(){
+  moving=null;
+  const rec=days[calSel];
+  if(rec&&!editing[calSel]){viewFromRec(calSel,rec)}
+  else if(!V||V.date!==calSel){V=null;if($("orders").value.trim()&&!rec){render();return}}
+  renderView();
+}
+function render(){editing[calSel]=!!days[calSel];moving=null;V=genView();renderView()}
+// user changed bakers/limits: redo a fresh (unsaved, untouched) split; otherwise just redraw
+function refresh(byUser){if(V&&!V.saved&&!V.dirty&&byUser)render();else if(V)renderView()}
+
+function renderView(){
+  const out=$("out");
+  const step=(n,t)=>`<div class="sh"><span class="num">${n}</span>${t}</div>`;
+  if(!V){out.innerHTML=`<div class="empty">Paste a cake list above, then tap <b>Generate</b>.</div>`;bar(false);return}
+  const v=V;let html="";
+  if(v.notes)html+=`<div class="card step">${step(4,"Check the cakes")}${v.notes}</div>`;
+  const has=Object.keys(v.res).some(g=>v.res[g].length)||Object.values(v.noTeam).some(Boolean);
+  if(!has){out.innerHTML=html+`<div class="empty">No cakes found yet. Paste a cake list above, then tap <b>Generate</b>.</div>`;bar(false);return}
+  const needNew=[];
+  let body="";
+  if(v.saved&&!v.dirty)body+=`<div class="saved"><b>🔒 Saved · ${fmtD(v.date)}</b><span>This is the split you saved. Tap a cake to move it, or redo the split from the pasted list.</span><div class="row"><button class="btn sm" id="redo">Redo split from pasted list</button></div></div>`;
+  else if(v.saved&&v.dirty)body+=`<div class="saved dirty"><b>✏️ Changed · not saved yet</b><span>Tap <b>Copy & Save</b> to update ${fmtD(v.date)}.</span></div>`;
+  else if(days[v.date])body+=`<div class="saved dirty"><b>New split for a saved day</b><span>Copy & Save will replace what was saved for ${fmtD(v.date)}.</span><div class="row"><button class="btn sm" id="back">Back to saved split</button></div></div>`;
+  for(const g of ["B","R"]){
+    const team=v.res[g]||[],overN=sumMap(v.over[g]||new Map());
+    if(!team.length&&!v.noTeam[g])continue;
+    const got=team.reduce((a,b)=>a+b.H+b.M+b.E,0)+overN,exp=v.expect[g],unk=v.unk[g]||0;
+    const C={H:0,M:0,E:0};for(const b of team){C.H+=b.H;C.M+=b.M;C.E+=b.E}
+    body+=`<div class="sec G${g}"><span>${GN[g]}${v.label[g]&&v.label[g]!==GN[g]?` (${esc(v.label[g])})`:""}</span><span style="font-size:15px">${got} loyang${exp!=null?(exp===got?" ✓ matches list":` · list says ${exp}${unk?`, ${unk} not recognised`:""}`):""}</span></div>`;
+    if(v.noTeam[g]){needNew.push(GN[g]);body+=`<div class="warn" style="border-color:var(--hard)"><b style="color:var(--hard)">⚠ New Bakers Needed</b> · no ${GN[g]} baker is available${g==="R"?" (and no Butter baker is free to help)":""}. Bring back someone on off-day in step 2.</div>`;continue}
+    if(overN){needNew.push(GN[g]);body+=`<div class="warn" style="border-color:var(--hard)"><b style="color:var(--hard)">⚠ New Bakers Needed</b> · every ${GN[g]} baker is full at ${v.cap[g]}. ${overN} loyang still need a baker:${[...v.over[g]].map(([n,q])=>`<div class="u"><span>${esc(n)} <span class="tag ${lvV(n)}">${lvV(n)}</span></span><span class="qty">× ${q}</span></div>`).join("")}</div>`}
+    else if(v.buffer[g])body+=`<p class="hint">Busy day: more than ${v.max} each, so ${GN[g]} bakers are using the buffer (max ${v.cap[g]}).</p>`;
+    const avg=team.length?((got-overN)/team.length).toFixed(1).replace(/\.0$/,""):"0";
+    body+=`<div class="sum"><div><b>${got}</b><span>cakes</span></div><div><b style="color:var(--hard)">${C.H}</b><span>HARD</span></div><div><b style="color:var(--med)">${C.M}</b><span>MEDIUM</span></div><div><b style="color:var(--easy)">${C.E}</b><span>EASY</span></div><div><b>${avg}</b><span>avg per baker (${team.length})</span></div></div>
+    <div class="grid">${team.map(b=>{const t=b.H+b.M+b.E,cap=v.cap[g]||LIM.buf,ms=periodStats(v.date,LIM.per,v.date)[b.n]?.T||0;
+      return `<div class="slip"><h3><span>${esc(b.n)}${ms?` <span class="hint" style="font:600 12px 'Nunito Sans'">(${ms} this ${LIM.per==="week"?"week":"month"})</span>`:""}${g==="R"&&bakers.find(x=>x.n===b.n)?.g==="B"?` <span class="tag GB">BUTTER helping</span>`:""} <span class="hint" style="font:600 13px 'Nunito Sans';${t>cap?"color:var(--hard)":""}">${t}/${cap}</span></span><span class="row" style="gap:4px"><span class="tag H">${b.H} H</span><span class="tag M">${b.M} M</span><span class="tag E">${b.E} E</span></span></h3>
+      <div class="meter">${t?`<i style="width:${b.H/t*100}%;background:var(--hard)"></i><i style="width:${b.M/t*100}%;background:var(--med)"></i><i style="width:${b.E/t*100}%;background:var(--easy)"></i>`:""}</div>
+      <ul>${sortItems(b.items).map(([n,q])=>{const open=moving&&moving.g===g&&moving.b===b.n&&moving.c===n;
+        return `<li class="mv${open?" open":""}" data-g="${g}" data-b="${esc(b.n)}" data-c="${esc(n)}"><span>${esc(n)} <span class="tag ${lvV(n)}">${lvV(n)}</span></span><span class="qty">× ${q} <span class="mvi" aria-hidden="true">⇄</span></span></li>${open?moverHtml(g,b.n,n,q):""}`}).join("")}</ul></div>`}).join("")}</div>`;
+  }
+  if(v.idle.length)body+=`<div class="sec" style="background:var(--line)"><span>Not baking today</span></div><div class="card" style="padding:8px 14px">${v.idle.map(x=>`<div class="item" style="border:0;border-bottom:1px solid var(--line);border-radius:0"><span class="nm">${esc(x.n)}</span><span class="tag ${x.st==="OFFDAY"?"H":"E"}">${x.st}</span></div>`).join("")}</div>`;
+  if(needNew.length)body=`<div class="warn" style="border-color:var(--hard);font-size:17px"><b style="color:var(--hard)">⚠ New Bakers Needed (${needNew.join(" & ")})</b><br><span class="hint">Everyone has reached the maximum. Add a baker in the Bakers tab or bring back someone on off-day.</span></div>`+body;
+  html+=`<div class="step">${step(5,v.saved&&!v.dirty?"Saved split":"Result")}<p class="hint" style="margin:0 0 8px">Tap any cake to move it to another baker.</p>${body}</div>`;
+  out.innerHTML=html;
+  bar(true);
+}
+function moverHtml(g,from,cake,q){
+  const t=moveTargets(g,from);
+  if(!t.length)return `<li class="mover"><span class="hint">No other ${GN[g]} baker is working today.</span><button class="btn sm" data-mvx="1">Close</button></li>`;
+  const cnt=n=>{const b=(V.res[g]||[]).find(x=>x.n===n);return b?b.H+b.M+b.E:0};
+  return `<li class="mover"><label>Move <select id="mvQ">${Array.from({length:q},(_,i)=>`<option value="${q-i}">${q-i===q&&q>1?"all "+q:q-i}</option>`).join("")}</select> to <select id="mvTo">${t.map(n=>`<option value="${esc(n)}">${esc(n)} (${cnt(n)})</option>`).join("")}</select></label><span class="row"><button class="btn sm main" data-mvgo="1">Move</button><button class="btn sm" data-mvx="1">Cancel</button></span></li>`;
+}
+function bar(on){
+  $("actbar").hidden=!on;document.body.classList.toggle("hasbar",on);
+  if(!on)return;
+  const s=V.saved&&!V.dirty;
+  $("cs").textContent=s?"Copy for WhatsApp":"Copy & Save";
+  $("co").hidden=s;
+  $("barNote").textContent=s?"Already saved":"";
+}
+function whatsappText(v){
+  const mon=["JAN","FEB","MAC","APR","MEI","JUN","JUL","OGOS","SEP","OKT","NOV","DIS"];
+  const bd=pd(v.date);
+  const title=`LIST KEK ${bd.getDate()} ${mon[bd.getMonth()]} ${bd.getFullYear()}`;
+  const gsum=g=>(v.res[g]||[]).reduce((a,b)=>a+sumMap(b.items),0)+sumMap(v.over[g]||new Map());
+  const total=gsum("B")+gsum("R");
+  let t=`*_${title}_*\n\n*${total} LOYANG*`;
+  for(const g of ["B","R"]){
+    if(!gsum(g))continue;
+    t+=`\n\n*KEK ${v.label[g]||GN[g]} - ${gsum(g)} LOYANG*`;
+    for(const b of v.res[g]||[]){if(!b.items.size)continue;t+=`\n\n*${b.n}*\n`+sortItems(b.items).map(([n,q])=>`${n} -${q}`).join("\n")}
+    if(v.over[g]&&v.over[g].size)t+=`\n\n*⚠ NEW BAKERS NEEDED*\n`+sortItems(v.over[g]).map(([n,q])=>`${n} -${q}`).join("\n");
+  }
+  if(v.idle.length)t+=`\n\n`+v.idle.map(x=>`${x.n} - ${x.st}`).join("\n");
+  if(v.footer&&v.footer.length)t+=`\n\n______________________\n\n`+v.footer.join("\n");
+  return t;
+}
+async function copyText(txt){
+  try{await navigator.clipboard.writeText(txt);return true}
+  catch(err){const ta=document.createElement("textarea");ta.value=txt;document.body.appendChild(ta);ta.select();let ok=false;try{ok=document.execCommand("copy")}catch(x){}ta.remove();return ok}
+}
+$("out").addEventListener("click",async e=>{
+  const t=e.target;
+  const a=t.dataset.add;
+  if(a){addCake(t.dataset.n,a,t.dataset.g);render();toast("Added to cake list");return}
+  if(t.id==="redo"){if(!$("orders").value.trim())return toast("Paste the cake list in step 3 first");editing[calSel]=true;render();return}
+  if(t.id==="back"){editing[calSel]=false;V=null;showDay();return}
+  if(t.dataset.mvx){moving=null;renderView();return}
+  if(t.dataset.mvgo){const m=moving;moving=null;doMove(m.g,m.b,m.c,$("mvTo").value,parseInt($("mvQ").value,10));renderView();return}
+  const li=t.closest&&t.closest("li.mv");
+  if(li){const m={g:li.dataset.g,b:li.dataset.b,c:li.dataset.c};moving=(moving&&moving.g===m.g&&moving.b===m.b&&moving.c===m.c)?null:m;renderView();return}
+});
+$("cs").addEventListener("click",async()=>{
+  if(!V)return;
+  const btn=$("cs"),date=V.date;
+  const copied=await copyText(whatsappText(V));
+  if(V.saved&&!V.dirty){toast(copied?"Copied! Paste in WhatsApp":"Copy blocked: use Copy only and long-press");return}
+  if(days[date]&&!V.saved&&btn.dataset.armed!=="1"){btn.dataset.armed="1";btn.textContent="Tap again to replace "+fmtD(date);toast(copied?"Copied. Tap again to also replace the saved day":"Tap again to replace the saved day");return}
+  btn.dataset.armed="";
+  btn.disabled=true;btn.textContent="Saving…";
+  const ok=await saveDay(date,recFromView(V));
+  btn.disabled=false;
+  if(ok){V.saved=true;V.dirty=false;editing[date]=false;toast(copied?"Copied & saved ✓":"Saved ✓ (copy blocked, tap Copy for WhatsApp)")}
+  else toast(copied?"Copied, but NOT saved. Check internet and tap again":"Not saved. Check internet and tap again");
+  renderView();
+});
+$("co").addEventListener("click",async()=>{if(V)toast((await copyText(whatsappText(V)))?"Copied (not saved)":"Copy blocked")});
+$("out").addEventListener("change",e=>{const k=e.target.dataset.fix;if(k==null||!e.target.value)return;alias[k]=e.target.value;save("mm_alias",alias);drawCakes();render();toast("Got it, remembered")});
+$("go").addEventListener("click",render);
+$("again").addEventListener("click",render);
+$("clear").addEventListener("click",()=>{$("orders").value="";save("mm_orders","");if(V&&!V.saved){V=null;renderView()}});
+$("sample").addEventListener("click",()=>{$("orders").value="*_LIST KEK HARI INI_*\n\n*KEK PREMIUM - 8 LOYANG*\nCoklat Mamasu -3\nBiscof chese -2\nNutella Almond -1\nOreo Cheese -2\n\n*KEK REGULAR - 12 LOYANG*\nPandan Cheese -3\nDurain -2\nHorlicks -2\nKopi -2\nTiga Rasa -1\nChipsmore -2\n\n______________________\n\nAdunan Butter - 3 Pok\nAdunan Biasa - 4 Pok";render()});
+
+const okB=v=>Array.isArray(v)&&v.every(b=>b&&typeof b.n==="string"&&typeof b.on==="boolean");
+const okC=v=>Array.isArray(v)&&v.every(c=>c&&typeof c.n==="string"&&LV[c.l]);
+const okO=v=>v&&typeof v==="object"&&!Array.isArray(v);
+function applyShared(k,v){
+  if(k==="bakers"&&okB(v)){const l=v.map(b=>({n:b.n,on:b.on,g:b.g==="B"||b.g==="R"?b.g:(DEF_G[b.n]||"R")}));bakers=prioFix(l);if(bakers!==l)pushShared("bakers",true)}
+  else if(k==="cakes"&&okC(v)&&!v.some(c=>["chempiyen","masammanisvanilla"].includes(norm(c.n)))){pushShared("cakes",true);return} // shared list is the old one: replace it with the PDF list
+  else if(k==="cakes"&&okC(v))cakes=v.map(c=>({n:c.n,l:c.l,g:c.g==="B"||c.g==="R"?c.g:cg(c.n)}));
+  else if(k==="alias"&&okO(v)){alias={};for(const[a,b]of Object.entries(v))if(typeof b==="string")alias[a]=b}
+  else if(k==="hist"&&okO(v)){hist={};for(const[a,b]of Object.entries(v))if(b&&typeof b==="object")hist[a]={H:+b.H||0,M:+b.M||0,E:+b.E||0,d:+b.d||0}}
+  else return;
+  saveLocal({bakers:"mm_bakers",cakes:"mm_cakes",alias:"mm_alias",hist:"mm_hist"}[k],{bakers,cakes,alias,hist}[k]);
+  drawBakers();drawCakes();refresh(false);
+}
+async function sheetPull(first,withDays){
+  try{
+    const wd=first||withDays;
+    const r=await fetch(syncUrl+(syncUrl.includes("?")?"&":"?")+"_="+Date.now()+(wd?"&days=400":""));
+    const j=await r.json();
+    if(wd&&j&&j.days)applyDays(j.days);
+    if(j&&$("ver"))$("ver").textContent="Mamasu Cake Splitter · v16 · 25 Nov 2026 · Google script "+(j.ver?"v"+j.ver:"OLD (please update)");
+    for(const k of KEYS){
+      const e=j&&j[k];
+      if(e&&e.t!=null){if(e.t!==remoteT[k]&&!pend[k]){remoteT[k]=e.t;applyShared(k,e.v)}}
+      else if(first)pushShared(k,true); // empty sheet: this phone's list becomes the shared one
+    }
+    syncOk();return true;
+  }catch(e){setSync("⚠ Shared list not reachable · using this phone's copy");return false}
+}
+async function saveDay(date,rec){
+  if(rec)days[date]=rec;else delete days[date];
+  saveLocal("mm_days",days);drawCal();dateNote();
+  try{
+    if(mode==="sheet"){
+      const rows=[];
+      if(rec){
+        for(const[n,x]of Object.entries(rec.b))for(const[c,l,q]of x.i)rows.push([n,GN[x.g],c,LV[l]||l,q]);
+        for(const[n,st]of Object.entries(rec.idle||{}))rows.push([n,st,"","",0]);
+        for(const g of ["B","R"])if(rec.label&&rec.label[g])rows.push([g,"LABEL",rec.label[g],"",0]);
+        (rec.footer||[]).forEach((f,i)=>rows.push(["","FOOTER",f,"",i]));
+      }
+      const r=await fetch(syncUrl,{method:"POST",headers:{"Content-Type":"text/plain;charset=utf-8"},body:JSON.stringify({action:"day",date,rows,pin})});
+      const j=await r.json();if(j&&j.error==="pin"){pinRejected();return false}return!!(j&&j.ok);
+    }
+    if(mode==="claude"){await db.doc("shared/days").set({v:JSON.parse(JSON.stringify(days))});return true}
+  }catch(e){}
+  return false;
+}
+function applyDays(v){
+  if(!okO(v))return;
+  const clean={};
+  for(const[d,rec]of Object.entries(v)){
+    if(!/^\d{4}-\d{2}-\d{2}$/.test(d)||!okO(rec))continue;
+    const r={b:{},idle:{}};
+    for(const[n,x]of Object.entries(rec.b||{}))if(okO(x)&&Array.isArray(x.i)&&n&&n!=="B"&&n!=="R"&&!x.i.some(a=>a&&(a[0]==="LABEL"||a[0]==="FOOTER")))r.b[n]={g:x.g==="B"?"B":"R",i:x.i.filter(a=>Array.isArray(a)&&typeof a[0]==="string").map(a=>[a[0],LV[a[1]]?a[1]:({HARD:"H",MEDIUM:"M",EASY:"E"}[a[1]]||"E"),+a[2]||0])};
+    for(const[n,st]of Object.entries(rec.idle||{}))if(st==="STANDBY"||st==="OFFDAY")r.idle[n]=st;
+    if(okO(rec.label))r.label={B:String(rec.label.B||"BUTTER"),R:String(rec.label.R||"REGULAR")};
+    if(Array.isArray(rec.footer))r.footer=rec.footer.filter(x=>typeof x==="string").slice(0,30);
+    clean[d]=r;
+  }
+  days=clean;saveLocal("mm_days",days);drawCal();if($("dTxt"))dateNote();
+  if(typeof V!=="undefined"&&(!V||(V.saved&&!V.dirty))&&days[calSel]&&!editing[calSel]&&$("out"))showDay();
+}
+let pollTimer=null,pollN=0;
+async function startSync(){
+  clearInterval(pollTimer);
+  if(syncUrl){
+    mode="sheet";setSync("Connecting to shared list…");
+    await sheetPull(true);
+    pollTimer=setInterval(()=>{if(document.visibilityState==="visible")sheetPull(false,(++pollN)%4===0)},8000);
+    return;
+  }
+  const d=window.claude&&window.claude.use?await window.claude.use("db"):null;
+  if(!d){mode="local";setSync("Saved on this phone only. Set up sharing in the Bakers tab");return}
+  db=d;mode="claude";
+  const tm=setTimeout(()=>setSync("Shared list not reachable yet · using this phone's copy"),10000);
+  db.doc("shared/days").onSnapshot(snap=>{if(snap.exists&&!snap.metadata.hasPendingWrites)applyDays((snap.data()||{}).v)},()=>{});
+  for(const k of KEYS){
+    db.doc("shared/"+k).onSnapshot(snap=>{
+      if(!snap.metadata.fromCache){clearTimeout(tm);if(!readOnly)setSync("✓ Shared list · same on every phone")}
+      if(snap.exists&&!snap.metadata.hasPendingWrites)applyShared(k,(snap.data()||{}).v);
+    },()=>{clearTimeout(tm);setSync("Shared list unavailable · using this phone's copy")});
+  }
+}
+document.addEventListener("visibilitychange",()=>{if(mode==="sheet"&&document.visibilityState==="visible")sheetPull(false,true)});
+$("syncUrl").value=syncUrl;
+if(SYNC_URL_FIXED)$("syncUrl").disabled=true;
+$("syncSave").addEventListener("click",async()=>{
+  const u=$("syncUrl").value.trim();
+  if(u&&!/^https:\/\/script\.google\.com\/macros\/s\/[\w-]+\/exec$/.test(u))return toast("Link should end with /exec");
+  syncUrl=u;saveLocal("mm_sync",u);
+  if(!u){mode="local";setSync("Saved on this phone only");return toast("Sharing turned off")}
+  const ok=await (async()=>{mode="sheet";return sheetPull(true)})();
+  toast(ok?"Connected!":"Couldn't connect. Check the link");startSync();
+});
+// ---------- calendar
+const MONTHS=["January","February","March","April","May","June","July","August","September","October","November","December"];
+let calM=new Date(),calSel=todayS(),calPer=LIM.per;calM.setDate(1);
+function dayTotal(rec){let t=0;for(const x of Object.values(rec.b||{}))for(const[,,q]of x.i)t+=q;return t}
+function drawCal(){
+  if(!$("calGrid"))return;
+  const y=calM.getFullYear(),m=calM.getMonth(),first=(new Date(y,m,1).getDay()+6)%7,n=new Date(y,m+1,0).getDate(),td=todayS();
+  $("calTitle").textContent=`${MONTHS[m]} ${y}`;
+  let h="";for(let i=0;i<first;i++)h+=`<span class="pad"></span>`;
+  for(let d=1;d<=n;d++){const k=`${y}-${pad2(m+1)}-${pad2(d)}`,rec=days[k],t=rec?dayTotal(rec):0;
+    h+=`<button data-day="${k}" class="${rec?"has":""} ${k===calSel?"sel":""} ${k===td?"tdy":""}">${d}${rec?`<small>${t}</small>`:""}</button>`}
+  $("calGrid").innerHTML=h;
+  const rec=days[calSel];
+  $("calDay").innerHTML=`<h3 style="font:800 18px 'Baloo 2';margin:14px 0 6px">Saved for ${fmtD(calSel)}</h3>`+(rec?`
+    <div class="list">${Object.entries(rec.b).map(([nm,x])=>{const c={H:0,M:0,E:0};let t=0;for(const[,l,q]of x.i){c[l]+=q;t+=q}
+      return `<div class="item" style="flex-direction:column;align-items:stretch"><div class="row" style="justify-content:space-between"><b>${esc(nm)}</b><span><span class="tag G${x.g}">${GN[x.g]}</span> <b>${t}</b></span></div><div class="hint" style="margin:2px 0">${x.i.map(([cn,,q])=>`${esc(cn)} ×${q}`).join(", ")}</div><div><span class="tag H">${c.H} H</span> <span class="tag M">${c.M} M</span> <span class="tag E">${c.E} E</span></div></div>`}).join("")}</div>
+    ${Object.keys(rec.idle||{}).length?`<p class="hint">${Object.entries(rec.idle).map(([nm,st])=>`${esc(nm)} - ${st}`).join(" · ")}</p>`:""}
+    <div class="row"><button class="btn sm" id="calDel">Delete this day</button></div>`
+    :`<p class="hint">Nothing saved for this day yet.</p>`);
+  // fairness table for the week/month around the selected day
+  const st=periodStats(calSel,calPer),[a,b]=periodRange(calSel,calPer);
+  $("perW").className="btn sm"+(calPer==="week"?" main":"");$("perM").className="btn sm"+(calPer==="month"?" main":"");
+  $("perLbl").textContent=`${pd(a).getDate()} ${MONTHS[pd(a).getMonth()].slice(0,3)} – ${pd(b).getDate()} ${MONTHS[pd(b).getMonth()].slice(0,3)}`;
+  const names=[...new Set([...bakers.map(x=>x.n),...Object.keys(st)])];
+  const rows=names.map(nm=>({nm,...(st[nm]||{T:0,H:0,M:0,E:0,d:0})}));
+  const tot=rows.reduce((s,r)=>s+r.T,0),avg=rows.length?tot/rows.length:0,mx=Math.max(1,...rows.map(r=>r.T));
+  $("fair").innerHTML=tot?`<p class="hint" style="margin:0 0 6px">${tot} cakes · average <b>${avg.toFixed(1)}</b> per baker</p>
+    <div class="scroll"><table class="fair"><tr><th>Baker</th><th>Days</th><th>Cakes</th><th>H</th><th>M</th><th>E</th><th>vs avg</th></tr>
+    ${rows.sort((x,y)=>y.T-x.T).map(r=>{const df=r.T-avg;return `<tr><td>${esc(r.nm)}<div class="bar" style="width:${r.T/mx*100}%"></div></td><td>${r.d}</td><td><b>${r.T}</b></td><td>${r.H}</td><td>${r.M}</td><td>${r.E}</td><td style="color:${Math.abs(df)<=avg*0.1?"var(--easy)":df>0?"var(--hard)":"var(--med)"}">${df>0?"+":""}${df.toFixed(1)}</td></tr>`}).join("")}</table></div>
+    <p class="hint">Green = close to average. Bakers below average are picked first on the next days.</p>`:`<div class="empty">No saved days in this ${calPer} yet. Tap <b>Save as final</b> after each split.</div>`;
+}
+$("calGrid").addEventListener("click",e=>{const b=e.target.closest("button");if(!b||!b.dataset.day)return;setDate(b.dataset.day,true)});
+$("calPrev").addEventListener("click",()=>{calM.setMonth(calM.getMonth()-1);drawCal()});
+$("calNext").addEventListener("click",()=>{calM.setMonth(calM.getMonth()+1);drawCal()});
+$("perW").addEventListener("click",()=>{calPer="week";drawCal()});
+$("perM").addEventListener("click",()=>{calPer="month";drawCal()});
+$("calDay").addEventListener("click",async e=>{
+  if(e.target.id==="calDel"){
+    if(e.target.dataset.armed!=="1"){e.target.dataset.armed="1";e.target.textContent="Tap again to delete "+calSel;return}
+    const ok=await saveDay(calSel,null);toast(ok?"Day deleted":"Deleted on this phone only");
+  }
+});
+const DAYN=["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
+const fmtD=k=>{const d=pd(k);return `${DAYN[d.getDay()]}, ${pad2(d.getDate())}/${pad2(d.getMonth()+1)}/${d.getFullYear()}`};
+let userPicked=false; // false = follow today's date automatically
+function dateNote(){$("dateNote").textContent=days[calSel]?"This date is already saved. Save as final will replace it.":(calSel!==todayS()?"Not today's date":"")}
+function drawDate(){$("dTxt").textContent=fmtD(calSel)+(calSel===todayS()?" · Today":"");dateNote()}
+function setDate(k,byUser){
+  const changed=k!==calSel;calSel=k;userPicked=!!byUser&&k!==todayS();
+  const d=pd(k);calM=new Date(d.getFullYear(),d.getMonth(),1);
+  drawDate();drawCal();if(changed)showDay();
+}
+const shift=n=>{const d=pd(calSel);d.setDate(d.getDate()+n);setDate(ds(d),true)};
+$("dPrev").addEventListener("click",()=>shift(-1));
+$("dNext").addEventListener("click",()=>shift(1));
+$("dToday").addEventListener("click",()=>setDate(todayS(),false));
+$("dShow").addEventListener("click",()=>{const p=$("calPanel"),open=p.hidden;p.hidden=!open;$("dShow").setAttribute("aria-expanded",open);if(open){drawCal();if(mode==="sheet")sheetPull(false,true)}});
+// always open on today's date; also roll over at midnight if no other date was picked
+function keepToday(){if(!userPicked&&calSel!==todayS())setDate(todayS(),false);else drawDate()}
+window.addEventListener("pageshow",e=>{if(e.persisted){userPicked=false;keepToday()}});
+document.addEventListener("visibilitychange",()=>{if(document.visibilityState==="visible")keepToday()});
+window.addEventListener("focus",keepToday);
+setInterval(keepToday,60000);
+setDate(todayS(),false);
+drawCal();
+$("limPer").value=LIM.per;$("limPer").addEventListener("change",()=>{LIM.per=$("limPer").value;saveLocal("mm_lim",LIM);calPer=LIM.per;drawCal();refresh(true);toast("Balancing over the "+LIM.per)});
+$("limMin").value=LIM.min;$("limTgt").value=LIM.tgt;$("limMax").value=LIM.max;$("limBuf").value=LIM.buf;
+$("limSave").addEventListener("click",()=>{const v=id=>parseInt($(id).value,10),mi=v("limMin"),tg=v("limTgt"),m=v("limMax"),b=v("limBuf");
+  if(!(mi>0)||!(tg>=mi))return toast("Per baker: the second number must be the same or bigger");
+  if(!(m>=tg)||!(b>=m))return toast("Max must be ≥ per baker, and Buffer ≥ Max");
+  LIM={min:mi,tgt:tg,max:m,buf:b,per:LIM.per};saveLocal("mm_lim",LIM);toast(`Saved: ${mi}–${tg} per baker, max ${m}, buffer ${b}`);refresh(true)});
+startSync();
+drawBakers();drawCakes();
+showDay();
+}
+</script>
+</body>
+</html>
